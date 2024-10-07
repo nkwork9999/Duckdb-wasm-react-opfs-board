@@ -94,9 +94,7 @@ export default function App() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">
-        DuckDB - CSVをParquetに変換して表示
-      </h1>
+      <h1 className="text-3xl font-bold mb-4">DuckDB - CSVを表示</h1>
       <input type="file" accept=".csv" onChange={handleFileUpload} />
       {loading ? (
         <p>データを処理中...</p>
