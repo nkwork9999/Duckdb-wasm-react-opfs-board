@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import * as duckdb from "@duckdb/duckdb-wasm";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import * as arrow from "apache-arrow";
 
 export default function App() {
   const [loading, setLoading] = useState<boolean>(false);
@@ -25,13 +26,11 @@ export default function App() {
       console.log("File read successfully");
       const csvData = e.target?.result as string;
 
-      // DuckDBバンドルの選択
-      console.log("Selecting DuckDB bundle");
+      // DuckDBのバンドルを選択
       const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
       const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
 
       // Workerの設定
-      console.log("Setting up Worker");
       const worker_url = URL.createObjectURL(
         new Blob([`importScripts("${bundle.mainWorker!}");`], {
           type: "text/javascript",
@@ -41,7 +40,6 @@ export default function App() {
       const worker = new Worker(worker_url);
       const logger = new duckdb.ConsoleLogger();
       const db = new duckdb.AsyncDuckDB(logger, worker);
-      console.log("Initializing DuckDB instance");
       await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
       URL.revokeObjectURL(worker_url);
 
@@ -49,21 +47,21 @@ export default function App() {
         console.log("Connecting to DuckDB");
         const conn = await db.connect();
 
-        // メモリに直接CSVを読み込むには、データをテーブルにインポートする必要があります
-        const tableName = "csv_data";
-        await conn.query(`
-          CREATE TABLE ${tableName} AS 
-          SELECT * FROM read_csv_auto('dummy.csv', data='${csvData.replace(
-            /'/g,
-            "''"
-          )}');
-        `);
+        // メモリに直接CSVを登録
+        await db.registerFileText("data.csv", csvData);
+
+        // 仮想ファイルからCSVを挿入 自動検出
+        await conn.insertCSVFromPath("data.csv", {
+          schema: "main",
+          name: "foo", // テーブル名
+          detect: true, // 列を自動検出
+          header: true, // ヘッダー行を使用
+          delimiter: ",", // 区切り文字
+        });
 
         // データ取得
-        console.log("Executing query to read CSV data");
-        const result = await conn.query(`SELECT * FROM ${tableName};`);
+        const result = await conn.query("SELECT * FROM foo;");
         const data = result.toArray();
-        console.log("Data fetched:", data);
 
         // 列名を取得
         const columnNames = result.schema.fields.map((field) => ({
@@ -85,7 +83,6 @@ export default function App() {
         setLoading(false);
         await conn.close();
       } catch (error) {
-        // エラーの詳細をコンソールに出力
         console.error("CSVファイルの読み込みエラー:", error.message);
         console.error("Error details:", error);
         setLoading(false);
