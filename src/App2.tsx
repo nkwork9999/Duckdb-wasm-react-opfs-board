@@ -10,7 +10,7 @@ export default function App() {
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    console.log("File upload triggered"); // Step 1: Check if upload starts
+    console.log("File upload triggered");
     const file = event.target.files?.[0];
     if (!file) {
       console.log("No file selected");
@@ -18,11 +18,11 @@ export default function App() {
     }
 
     setLoading(true);
-    console.log("File is loading..."); // Step 2: Check if loading begins
+    console.log("File is loading...");
 
     const reader = new FileReader();
     reader.onload = async (e) => {
-      console.log("File read successfully"); // Step 3: Check if file reading completes
+      console.log("File read successfully");
       const csvData = e.target?.result as string;
 
       // DuckDBバンドルの選択
@@ -46,21 +46,24 @@ export default function App() {
       URL.revokeObjectURL(worker_url);
 
       try {
-        console.log("Connecting to DuckDB"); // Step 4: Confirm DuckDB connection
+        console.log("Connecting to DuckDB");
         const conn = await db.connect();
 
-        // CSVデータを読み込む (100行まで取得)
-        console.log("Executing query to read CSV data");
+        // メモリに直接CSVを読み込むには、データをテーブルにインポートする必要があります
+        const tableName = "csv_data";
         await conn.query(`
-          CREATE TABLE csv_data AS 
-          SELECT * FROM read_csv_auto('${csvData.replace(/'/g, "''")}')
-          LIMIT 100;
+          CREATE TABLE ${tableName} AS 
+          SELECT * FROM read_csv_auto('dummy.csv', data='${csvData.replace(
+            /'/g,
+            "''"
+          )}');
         `);
 
-        console.log("Query executed, fetching results"); // Step 5: Check query success
-        const result = await conn.query("SELECT * FROM csv_data;");
+        // データ取得
+        console.log("Executing query to read CSV data");
+        const result = await conn.query(`SELECT * FROM ${tableName};`);
         const data = result.toArray();
-        console.log("Data fetched:", data); // Step 6: Check the data received
+        console.log("Data fetched:", data);
 
         // 列名を取得
         const columnNames = result.schema.fields.map((field) => ({
@@ -77,7 +80,7 @@ export default function App() {
         }));
         setRows(rowData);
 
-        console.log("DataGrid rows and columns set"); // Step 7: Confirm grid data
+        console.log("DataGrid rows and columns set");
 
         setLoading(false);
         await conn.close();
