@@ -56,6 +56,7 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
         }));
 
         onDataLoaded(data, columns); // データを渡す
+        await saveCsvToOpfs(csvData);
         setLoading(false);
         await conn.close();
       } catch (error) {
@@ -66,7 +67,24 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
 
     reader.readAsText(file);
   };
+  const saveCsvToOpfs = async (csvData: string) => {
+    try {
+      // FileSystem Access APIでOPFSにアクセス
+      const rootHandle = await navigator.storage.getDirectory();
+      const newFileHandle = await rootHandle.getFileHandle("saved-data.csv", {
+        create: true,
+      });
 
+      // 書き込みストリームを開く
+      const writableStream = await newFileHandle.createWritable();
+      await writableStream.write(csvData);
+      await writableStream.close();
+
+      console.log("CSVファイルがOPFSに保存されました");
+    } catch (error) {
+      console.error("OPFSにファイルを保存する際のエラー:", error);
+    }
+  };
   return (
     <div>
       <input type="file" accept=".csv" onChange={handleFileUpload} />

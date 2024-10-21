@@ -5,6 +5,7 @@ import DataGridDisplay from "./DataGrid.tsx";
 import { Responsive, WidthProvider } from "react-grid-layout"; // react-grid-layoutをインポート
 import "react-grid-layout/css/styles.css"; // スタイルシートのインポート
 import "react-resizable/css/styles.css"; // リサイズ用のスタイル
+import CsvLoadFromOpfs from "./Csvloadfromopfs.tsx";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -33,6 +34,8 @@ const App: React.FC = () => {
     <div>
       <h1>CSVデータを読み込んで表示</h1>
       <CsvUpload onDataLoaded={handleDataLoaded} />
+      <h1>CSVをOPFSから読み込んで表示</h1>
+      <CsvLoadFromOpfs onDataLoaded={handleDataLoaded} />
       {rows.length > 0 && columns.length > 0 && (
         <ResponsiveGridLayout
           className="layout"
