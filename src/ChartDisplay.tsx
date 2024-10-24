@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { BarChart } from "@mui/x-charts/BarChart";
-import { Checkbox, FormControlLabel, FormGroup } from "@mui/material";
+import { Checkbox, FormControlLabel } from "@mui/material";
 
 interface ChartDisplayProps {
   rows: any[];
@@ -32,10 +32,8 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ rows, columns }) => {
 
   return (
     <div style={{ display: "flex", alignItems: "flex-start" }}>
-      {" "}
       {/* Flexboxで横並びに */}
       <div style={{ flex: 1 }}>
-        {" "}
         {/* グラフの領域 */}
         <BarChart
           xAxis={[{ data: labels, scaleType: "band" }]} // x軸に日付（DATE）をセット
@@ -44,23 +42,28 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ rows, columns }) => {
           height={400} // グラフの高さを指定
         />
       </div>
-      <div style={{ marginLeft: "20px" }}>
-        {" "}
-        {/* チェックボックスの領域 */}
-        <FormGroup>
-          {columns.slice(1).map((col) => (
-            <FormControlLabel
-              key={col.field}
-              control={
-                <Checkbox
-                  checked={selectedFields.includes(col.field)}
-                  onChange={() => handleCheckboxChange(col.field)}
-                />
-              }
-              label={col.headerName}
-            />
-          ))}
-        </FormGroup>
+
+      <div
+        style={{
+          marginLeft: "20px",
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "10px",
+        }}
+      >
+        {/* チェックボックスの領域を3列で表示 */}
+        {columns.slice(1).map((col) => (
+          <FormControlLabel
+            key={col.field}
+            control={
+              <Checkbox
+                checked={selectedFields.includes(col.field)}
+                onChange={() => handleCheckboxChange(col.field)}
+              />
+            }
+            label={col.headerName}
+          />
+        ))}
       </div>
     </div>
   );
