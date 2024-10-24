@@ -47,7 +47,16 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
           delimiter: ",",
         });
 
-        const result = await conn.query("SELECT * FROM foo;");
+        // 平均値を計算するSQLクエリを実行
+        const result = await conn.query(`
+          SELECT 
+            AVG(MIN) AS avg_min, 
+            AVG(PTS) AS avg_pts, 
+            AVG(REB) AS avg_reb, 
+            AVG(AST) AS avg_ast 
+          FROM foo;
+        `);
+
         const data = result.toArray();
         const columns = result.schema.fields.map((field) => ({
           field: field.name,
@@ -55,8 +64,8 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
           width: 150,
         }));
 
-        onDataLoaded(data, columns); // データを渡す
-        await saveCsvToOpfs(csvData);
+        // 平均値をonDataLoadedに渡す
+        onDataLoaded(data, columns);
         setLoading(false);
         await conn.close();
       } catch (error) {
@@ -67,24 +76,7 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
 
     reader.readAsText(file);
   };
-  const saveCsvToOpfs = async (csvData: string) => {
-    try {
-      // FileSystem Access APIでOPFSにアクセス
-      const rootHandle = await navigator.storage.getDirectory();
-      const newFileHandle = await rootHandle.getFileHandle("saved-data.csv", {
-        create: true,
-      });
 
-      // 書き込みストリームを開く
-      const writableStream = await newFileHandle.createWritable();
-      await writableStream.write(csvData);
-      await writableStream.close();
-
-      console.log("CSVファイルがOPFSに保存されました");
-    } catch (error) {
-      console.error("OPFSにファイルを保存する際のエラー:", error);
-    }
-  };
   return (
     <div>
       <input type="file" accept=".csv" onChange={handleFileUpload} />
