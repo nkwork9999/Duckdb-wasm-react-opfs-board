@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { Checkbox, FormControlLabel } from "@mui/material";
 
@@ -8,10 +8,16 @@ interface ChartDisplayProps {
 }
 
 const ChartDisplay: React.FC<ChartDisplayProps> = ({ rows, columns }) => {
-  // グラフに表示するデータのフィールドを保持するためのstate
   const [selectedFields, setSelectedFields] = useState<string[]>([
     columns[1].field,
   ]);
+
+  // rowsをDATE順にソート（降順）して、新しい日付が右に来るようにする
+  const sortedRows = [...rows].sort(
+    (a, b) =>
+      new Date(a[columns[0].field]).getTime() -
+      new Date(b[columns[0].field]).getTime()
+  );
 
   // チェックボックスの変更をハンドリングする関数
   const handleCheckboxChange = (field: string) => {
@@ -22,11 +28,11 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ rows, columns }) => {
     );
   };
 
-  const labels = rows.map((row) => row[columns[0].field]); // 1列目（DATE）をラベルに使用
+  const labels = sortedRows.map((row) => row[columns[0].field]); // ソートしたrowsのDATEをラベルに使用
 
   // チェックされているフィールドに基づいてデータを準備
   const dataset = selectedFields.map((field) => ({
-    data: rows.map((row) => parseFloat(row[field]) || 0), // 数値に変換してデータを取得
+    data: sortedRows.map((row) => parseFloat(row[field]) || 0), // 数値に変換してデータを取得
     label: columns.find((col) => col.field === field)?.headerName || field,
   }));
 
@@ -36,9 +42,16 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ rows, columns }) => {
       <div style={{ flex: 1 }}>
         {/* グラフの領域 */}
         <BarChart
-          xAxis={[{ data: labels, scaleType: "band" }]} // x軸に日付（DATE）をセット
+          xAxis={[
+            {
+              data: labels, // x軸にソートされた日付ラベルをセット
+              scaleType: "band",
+              labelRotation: -45, // 日付を斜めに表示して、すべての日付を表示
+              tickCount: labels.length, // すべての日付を表示するためにラベル数を設定
+            },
+          ]}
           series={dataset} // 選択されたデータを表示
-          width={500} // グラフの幅を指定
+          width={600} // グラフの幅を指定
           height={400} // グラフの高さを指定
         />
       </div>

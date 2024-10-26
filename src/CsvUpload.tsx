@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import * as duckdb from "@duckdb/duckdb-wasm";
+import dayjs from "dayjs"; // dayjsライブラリをインポート
 
 interface CsvUploadProps {
   onDataLoaded: (rows: any[], columns: any[]) => void; // データを渡すためのコールバック
@@ -38,6 +39,7 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
       try {
         const conn = await db.connect();
 
+        // CSVを登録し、テーブルを作成
         await db.registerFileText("data.csv", csvData);
         await conn.insertCSVFromPath("data.csv", {
           schema: "main",
@@ -47,25 +49,63 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
           delimiter: ",",
         });
 
+        // 元のデータを取得
+        const originalResult = await conn.query(`
+          SELECT * FROM foo;
+        `);
+
+        const originalRows = originalResult.toArray();
+
+        // DATE列を日付型に変換（dayjsでパース）
+        const formattedRows = originalRows.map((row) => ({
+          ...row,
+          DATE: dayjs(row.DATE, "YYYY/MM/DD").toDate(), // 日付フォーマットに従って変換
+        }));
+
         // 平均値を計算するSQLクエリを実行
-        const result = await conn.query(`
+        const averageResult = await conn.query(`
           SELECT 
-            AVG(MIN) AS avg_min, 
-            AVG(PTS) AS avg_pts, 
-            AVG(REB) AS avg_reb, 
-            AVG(AST) AS avg_ast 
+            '平均' as DATE,
+            '' as OPP,
+            '' as SCORE,
+            AVG(MIN) AS MIN, 
+            AVG(PTS) AS PTS, 
+            AVG(REB) AS REB, 
+            AVG(AST) AS AST,
+            AVG(STL) AS STL,
+            AVG(BLK) AS BLK,
+            AVG(FG) AS FG,
+            AVG("FG%") AS "FG%",
+            AVG("3P") AS "3P",
+            AVG("3P%") AS "3P%",
+            AVG(FT) AS FT,
+            AVG("FT%") AS "FT%",
+            AVG(OREB) AS OREB,
+            AVG(DREB) AS DREB,
+            AVG(TO) AS TO,
+            AVG(PF) AS PF,
+            AVG(EFF) AS EFF,
+            AVG("+/-") AS "+/-"
           FROM foo;
         `);
 
-        const data = result.toArray();
-        const columns = result.schema.fields.map((field) => ({
+        const averageRow = averageResult.toArray()[0]; // 平均値の行を取得
+        averageRow.DATE = "平均"; // 平均行のDATEを文字列にセット
+
+        // 平均値を最後の行として追加したデータを作成
+        const allRows = [...formattedRows, averageRow];
+
+        // カラム定義を生成
+        const columns = originalResult.schema.fields.map((field) => ({
           field: field.name,
           headerName: field.name,
           width: 150,
+          type: field.name === "DATE" ? "date" : "string", // DATE列を日付型に設定
         }));
 
-        // 平均値をonDataLoadedに渡す
-        onDataLoaded(data, columns);
+        // onDataLoadedで元のデータと平均値を一緒に渡す
+        onDataLoaded(allRows, columns);
+
         setLoading(false);
         await conn.close();
       } catch (error) {

@@ -1,6 +1,5 @@
 import React from "react";
-import { DataGrid } from "@mui/x-data-grid";
-import { GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 interface DataGridDisplayProps {
   rows: any[];
@@ -14,9 +13,13 @@ const DataGridDisplay: React.FC<DataGridDisplayProps> = ({ rows, columns }) => {
         rows={rows}
         columns={columns}
         getRowId={(row) => {
-          // 「年月」がない場合に備えて、インデックスをIDとして利用
-          return row["年月"] || Math.random().toString(36).substr(2, 9);
+          // インデックスを使用して一意のIDを生成
+          return row["DATE"] || Math.random().toString(36).substr(2, 9);
         }}
+        pageSize={5}
+        rowsPerPageOptions={[5, 10, 20]}
+        checkboxSelection
+        sortingOrder={["desc", "asc"]} // 昇順・降順の指定
       />
     </div>
   );
