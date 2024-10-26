@@ -3,6 +3,8 @@ import CsvUpload from "./CsvUpload.tsx";
 import ChartDisplay from "./ChartDisplay.tsx";
 import DataGridDisplay from "./DataGrid.tsx";
 import CsvLoadFromOpfs from "./Csvloadfromopfs.tsx";
+import MinPie from "./MinPie.tsx";
+import BoxPlot from "./boxplot.tsx";
 
 const App: React.FC = () => {
   const [rows, setRows] = useState<any[]>([]);
@@ -28,6 +30,12 @@ const App: React.FC = () => {
           <div>
             <h2>Barチャート</h2>
             <ChartDisplay rows={rows} columns={columns} />
+          </div>
+          <div>
+            <MinPie rows={rows} columns={columns} />
+          </div>
+          <div>
+            <BoxPlot />
           </div>
         </div>
       )}
