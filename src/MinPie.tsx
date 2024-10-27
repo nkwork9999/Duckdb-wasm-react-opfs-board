@@ -30,7 +30,7 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
     setSelectedDate(date);
   };
 
-  // 選択された日付に基づいて MIN 列のデータを抽出し、48分中の割合で円グラフ用データを作成
+  // 選択された日付に基づいて MIN 列のデータを抽出し、48分中の出場時間を表示
   const pieChartData = () => {
     const minField = columns.find((col) => col.headerName === "MIN")?.field;
     const dateField = columns[0].field;
@@ -40,17 +40,17 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
 
     return [
       {
-        value: (minValue / 48) * 100,
+        value: minValue, // 出場時間をそのまま使用
         color: COLORS[0],
-        label: `出場時間: ${minValue.toFixed(1)}分`, // 実際の出場時間をラベルに表示
       },
       {
-        value: ((48 - minValue) / 48) * 100,
+        value: 48 - minValue, // 残り時間を48分から引いた値
         color: COLORS[1],
-        label: `残り時間: ${(((48 - minValue) / 48) * 100).toFixed(1)}%`, // 48分中の残り時間割合を表示
       },
     ];
   };
+
+  const pieData = pieChartData();
 
   return (
     <div
@@ -71,15 +71,56 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
           />
         ))}
       </FormGroup>
-      <PieChart
-        width={400}
-        height={400}
-        series={[
-          {
-            data: pieChartData(),
-          },
-        ]}
-      />
+
+      {/* グラフとラベルを配置するコンテナ */}
+      <div style={{ position: "relative", width: "400px", height: "400px" }}>
+        <PieChart
+          width={400}
+          height={400}
+          series={[
+            {
+              data: pieData,
+              label: { visible: false }, // ラベルを非表示に設定
+            },
+          ]}
+        />
+
+        {/* 出場時間ラベル（円グラフの上側に表示） */}
+        <div
+          style={{
+            position: "absolute",
+            top: "150px",
+            left: "100%",
+            transform: "translateX(-50%)",
+            backgroundColor: COLORS[0],
+            color: "white",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            fontSize: "14px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          出場時間: {pieData[0].value.toFixed(1)}分
+        </div>
+
+        {/* 残り時間ラベル（円グラフの下側に表示） */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "150px",
+            left: "100%",
+            transform: "translateX(-50%)",
+            backgroundColor: COLORS[1],
+            color: "white",
+            padding: "4px 8px",
+            borderRadius: "4px",
+            fontSize: "14px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          残り時間: {pieData[1].value.toFixed(1)}分
+        </div>
+      </div>
     </div>
   );
 };
