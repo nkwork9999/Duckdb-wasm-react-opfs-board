@@ -7,50 +7,50 @@ interface MinPieChartProps {
   columns: any[];
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AF19FF"];
+const COLORS = ["#0088FE", "#FF8042"]; // 出場時間と残り時間の色
 
 const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
-  const [pieData, setPieData] = useState<{ name: string; value: number }[]>([]);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
   useEffect(() => {
-    extractMinData();
+    extractAvailableDates();
   }, [rows, columns]);
 
-  // MIN列のデータを抽出し、選択可能な日付と円グラフ用データを整形
-  const extractMinData = () => {
-    // DATEとMIN列のフィールドを取得
+  // 日付のリストを設定し、初期状態ですべて選択
+  const extractAvailableDates = () => {
     const dateField = columns[0].field;
-    const minField = columns.find((col) => col.headerName === "MIN")?.field;
-
-    if (!minField) return; // MIN列がない場合は終了
-
     const dates = rows.map((row) => row[dateField]);
     setAvailableDates(dates);
-    setSelectedDates(dates); // 初期状態ですべて選択
-
-    // 初期データとして全日付のデータを設定
-    const initialPieData = rows.map((row) => ({
-      name: row[dateField],
-      value: (parseFloat(row[minField]) / 48) * 100, // 48分中の割合として計算
-    }));
-    setPieData(initialPieData);
+    setSelectedDate(dates[0]); // 初期状態で最初の日付を選択
   };
 
-  // チェックボックスの変更を処理して選択日付を更新
+  // チェックボックスの変更を処理し、選択された日付を更新
   const handleCheckboxChange = (date: string) => {
-    setSelectedDates((prevSelectedDates) =>
-      prevSelectedDates.includes(date)
-        ? prevSelectedDates.filter((d) => d !== date)
-        : [...prevSelectedDates, date]
-    );
+    setSelectedDate(date);
   };
 
-  // 円グラフのデータを選択日付に基づいてフィルタリング
-  const filteredPieData = pieData.filter((data) =>
-    selectedDates.includes(data.name)
-  );
+  // 選択された日付に基づいて MIN 列のデータを抽出し、48分中の割合で円グラフ用データを作成
+  const pieChartData = () => {
+    const minField = columns.find((col) => col.headerName === "MIN")?.field;
+    const dateField = columns[0].field;
+
+    const row = rows.find((r) => r[dateField] === selectedDate);
+    const minValue = row && minField ? parseFloat(row[minField]) || 0 : 0;
+
+    return [
+      {
+        value: (minValue / 48) * 100,
+        color: COLORS[0],
+        label: `出場時間: ${minValue.toFixed(1)}分`, // 実際の出場時間をラベルに表示
+      },
+      {
+        value: ((48 - minValue) / 48) * 100,
+        color: COLORS[1],
+        label: `残り時間: ${(((48 - minValue) / 48) * 100).toFixed(1)}%`, // 48分中の残り時間割合を表示
+      },
+    ];
+  };
 
   return (
     <div
@@ -63,7 +63,7 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
             key={date}
             control={
               <Checkbox
-                checked={selectedDates.includes(date)}
+                checked={selectedDate === date}
                 onChange={() => handleCheckboxChange(date)}
               />
             }
@@ -76,11 +76,7 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
         height={400}
         series={[
           {
-            data: filteredPieData.map((data, index) => ({
-              value: data.value,
-              color: COLORS[index % COLORS.length],
-              label: `${data.name}: ${data.value.toFixed(1)}%`,
-            })),
+            data: pieChartData(),
           },
         ]}
       />
