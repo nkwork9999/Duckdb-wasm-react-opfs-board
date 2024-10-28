@@ -1,4 +1,14 @@
 import React, { useState, useEffect } from "react";
+import {
+  Button,
+  Typography,
+  Box,
+  CircularProgress,
+  List,
+  ListItem,
+  Alert,
+} from "@mui/material";
+import { motion } from "framer-motion";
 
 interface CsvLoadFromOpfsProps {
   onDataLoaded: (rows: any[], columns: any[]) => void;
@@ -7,10 +17,10 @@ interface CsvLoadFromOpfsProps {
 const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [files, setFiles] = useState<FileSystemFileHandle[]>([]); // OPFS内のファイルリスト
+  const [files, setFiles] = useState<FileSystemFileHandle[]>([]);
 
   useEffect(() => {
-    loadOpfsFiles(); // コンポーネントのマウント時にファイルをロード
+    loadOpfsFiles();
   }, []);
 
   // OPFSからファイルリストをロードする関数
@@ -26,7 +36,7 @@ const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
         }
       }
 
-      setFiles(fileHandles); // ファイルリストを保存
+      setFiles(fileHandles);
     } catch (err) {
       setError("OPFSからファイルを読み込む際にエラーが発生しました。");
     } finally {
@@ -43,7 +53,6 @@ const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
       const file = await fileHandle.getFile();
       const fileContents = await file.text();
 
-      // CSVファイルをパースしてデータを抽出
       parseCsv(fileContents);
     } catch (err: any) {
       setError(`ファイル読み込みエラー: ${err.message}`);
@@ -72,25 +81,39 @@ const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
   };
 
   return (
-    <div>
-      <h3>OPFSからCSVファイルを選択</h3>
-      {loading && <p>データを読み込み中...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <Box>
+      <Typography variant="h5" component="h3" gutterBottom>
+        OPFSからCSVファイルを選択
+      </Typography>
 
-      <ul>
+      {/* {error && (
+        <Alert severity="error" style={{ marginTop: "10px" }}>
+          {error}
+        </Alert>
+      )} */}
+
+      <List style={{ maxWidth: "400px", marginTop: "10px" }}>
         {files.map((fileHandle) => (
-          <li key={fileHandle.name}>
-            <button onClick={() => handleFileSelect(fileHandle)}>
-              {fileHandle.name}
-            </button>
-          </li>
+          <ListItem key={fileHandle.name}>
+            <motion.div whileHover={{ scale: 1.02 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handleFileSelect(fileHandle)}
+              >
+                {fileHandle.name}
+              </Button>
+            </motion.div>
+          </ListItem>
         ))}
-      </ul>
+      </List>
 
       {files.length === 0 && !loading && (
-        <p>利用可能なファイルがありません。</p>
+        <Typography variant="body2" color="textSecondary">
+          利用可能なファイルがありません。
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 
