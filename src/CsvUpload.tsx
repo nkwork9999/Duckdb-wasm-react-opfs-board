@@ -19,20 +19,28 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
 
     setLoading(true);
 
+    //ファイルリーダーで単純にCSVを読む
+    //読み込み後onloadが走る
+    //ファイル内容がテキストとして格納
     const reader = new FileReader();
     reader.onload = async (e) => {
       const csvData = e.target?.result as string;
-      //初回時はバンドルゲットでオンラインである必要性がある
-      //ローカル保存?
+
+      //初回時はバンドルリストを取得するためオンラインである必要性がある
+      //javascriptはduckdbを実行するために必要
+
       const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
       const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+
+      //一時的にwebworkerとして使用するjavascriptコードにアクセスするためのurlを生成
 
       const worker_url = URL.createObjectURL(
         new Blob([`importScripts("${bundle.mainWorker!}");`], {
           type: "text/javascript",
         })
       );
-
+      //web workerでバックグラウンドでデータベース処理を行う環境を作る。
+      //ブラウザがメインスレッドなのでそれを妨げないようにデータベース処理を行う
       const worker = new Worker(worker_url);
       const logger = new duckdb.ConsoleLogger();
       const db = new duckdb.AsyncDuckDB(logger, worker);
