@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Tabs, Tab, Typography, Box, Button } from "@mui/material";
+import { Tabs, Tab, Typography, Box } from "@mui/material";
 import CsvUpload from "./CsvUpload.tsx";
 import CsvLoadFromOpfs from "./Csvloadfromopfs.tsx";
 import ChartDisplay from "./ChartDisplay.tsx";
@@ -24,11 +24,12 @@ const App: React.FC = () => {
 
   return (
     <div style={{ padding: "20px", maxWidth: "90vw", margin: "0 auto" }}>
-      {/* CSV Upload section */}
+      {/* Horizontal layout for CSV Upload and OPFS Load sections */}
       <Box
         display="flex"
-        alignItems="center"
-        justifyContent="space-between"
+        alignItems="flex-start"
+        justifyContent="space-around"
+        gap={4}
         marginBottom={4}
         component={motion.div}
         initial={{ opacity: 0, y: -20 }}
@@ -38,25 +39,13 @@ const App: React.FC = () => {
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <CsvUpload onDataLoaded={handleDataLoaded} />
         </motion.div>
-      </Box>
 
-      {/* OPFS Load section */}
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        marginBottom={4}
-        component={motion.div}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <CsvLoadFromOpfs onDataLoaded={handleDataLoaded} />
         </motion.div>
       </Box>
 
-      {/* Tabs and content as in previous example */}
+      {/* Tabs for different components */}
       {rows.length > 0 && columns.length > 0 && (
         <>
           <Tabs
