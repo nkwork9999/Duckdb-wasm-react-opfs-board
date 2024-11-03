@@ -36,7 +36,7 @@ const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
         }
       }
 
-      setFiles(fileHandles);
+      setFiles(fileHandles); // ファイルリストを更新
     } catch (err) {
       setError("OPFSからファイルを読み込む際にエラーが発生しました。");
     } finally {
@@ -86,11 +86,11 @@ const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
         OPFSからCSVファイルを選択
       </Typography>
 
-      {/* {error && (
+      {error && (
         <Alert severity="error" style={{ marginTop: "10px" }}>
           {error}
         </Alert>
-      )} */}
+      )}
 
       <List style={{ maxWidth: "400px", marginTop: "10px" }}>
         {files.map((fileHandle) => (
@@ -112,6 +112,13 @@ const CsvLoadFromOpfs: React.FC<CsvLoadFromOpfsProps> = ({ onDataLoaded }) => {
         <Typography variant="body2" color="textSecondary">
           利用可能なファイルがありません。
         </Typography>
+      )}
+
+      {loading && (
+        <Box display="flex" alignItems="center" gap={1} mt={2}>
+          <CircularProgress size={24} />
+          <Typography>ファイルを読み込んでいます...</Typography>
+        </Box>
       )}
     </Box>
   );

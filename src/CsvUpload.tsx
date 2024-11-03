@@ -11,6 +11,27 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for hidden input
 
+  // OPFSにファイルを保存する関数
+  const saveToOPFS = async (fileName: string, content: string) => {
+    try {
+      // OPFSのルートディレクトリを取得
+      const rootDir = await navigator.storage.getDirectory();
+      // 新しいファイルを作成
+      const fileHandle = await rootDir.getFileHandle(fileName, {
+        create: true,
+      });
+      // 書き込みストリームを開く
+      const writable = await fileHandle.createWritable();
+      // コンテンツを書き込む
+      await writable.write(content);
+      // ストリームを閉じて保存を完了
+      await writable.close();
+      console.log("OPFSにファイルが保存されました:", fileName);
+    } catch (error) {
+      console.error("OPFSにファイルを保存中にエラーが発生しました:", error);
+    }
+  };
+
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -19,28 +40,22 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
 
     setLoading(true);
 
-    //ファイルリーダーで単純にCSVを読む
-    //読み込み後onloadが走る
-    //ファイル内容がテキストとして格納
     const reader = new FileReader();
     reader.onload = async (e) => {
       const csvData = e.target?.result as string;
 
-      //初回時はバンドルリストを取得するためオンラインである必要性がある
-      //javascriptはduckdbを実行するために必要
+      // OPFSにファイルを保存
+      await saveToOPFS("uploaded_data.csv", csvData);
 
       const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
       const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-
-      //一時的にwebworkerとして使用するjavascriptコードにアクセスするためのurlを生成
 
       const worker_url = URL.createObjectURL(
         new Blob([`importScripts("${bundle.mainWorker!}");`], {
           type: "text/javascript",
         })
       );
-      //web workerでバックグラウンドでデータベース処理を行う環境を作る。
-      //ブラウザがメインスレッドなのでそれを妨げないようにデータベース処理を行う
+
       const worker = new Worker(worker_url);
       const logger = new duckdb.ConsoleLogger();
       const db = new duckdb.AsyncDuckDB(logger, worker);
@@ -48,8 +63,9 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
       URL.revokeObjectURL(worker_url);
 
       try {
+        //データベース接続
         const conn = await db.connect();
-
+        //メモリ上にdata.csvの名前で登録後、テーブルへ挿入
         await db.registerFileText("data.csv", csvData);
         await conn.insertCSVFromPath("data.csv", {
           schema: "main",
@@ -62,25 +78,11 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
         const originalResult = await conn.query(`SELECT * FROM foo;`);
         const originalRows = originalResult.toArray();
 
-        const formattedRows = originalRows.map((row) => ({
+        const formattedRows = originalRows.map((row, index) => ({
+          id: index, // 各行に一意のIDを設定
           ...row,
           DATE: dayjs(row.DATE, "YYYY/MM/DD").toDate(),
         }));
-
-        const averageResult = await conn.query(`
-          SELECT '平均' as DATE, '' as OPP, '' as SCORE,
-            AVG(MIN) AS MIN, AVG(PTS) AS PTS, AVG(REB) AS REB, 
-            AVG(AST) AS AST, AVG(STL) AS STL, AVG(BLK) AS BLK, 
-            AVG(FG) AS FG, AVG("FG%") AS "FG%", AVG("3P") AS "3P", 
-            AVG("3P%") AS "3P%", AVG(FT) AS FT, AVG("FT%") AS "FT%", 
-            AVG(OREB) AS OREB, AVG(DREB) AS DREB, AVG(TO) AS TO, 
-            AVG(PF) AS PF, AVG(EFF) AS EFF, AVG("+/-") AS "+/-"
-          FROM foo;
-        `);
-
-        const averageRow = averageResult.toArray()[0];
-        averageRow.DATE = "平均";
-        const allRows = [...formattedRows, averageRow];
 
         const columns = originalResult.schema.fields.map((field) => ({
           field: field.name,
@@ -89,7 +91,7 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onDataLoaded }) => {
           type: field.name === "DATE" ? "date" : "string",
         }));
 
-        onDataLoaded(allRows, columns);
+        onDataLoaded(formattedRows, columns);
 
         setLoading(false);
         await conn.close();

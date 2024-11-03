@@ -35,7 +35,7 @@ const BoxPlot = () => {
         {
           y: data,
           type: "box",
-          name: "Sample Data",
+          name: "身長分布",
           marker: { color: "rgb(8,81,156)" },
           boxpoints: "all", // "all"にするとデータポイントを全表示
         },
@@ -43,8 +43,8 @@ const BoxPlot = () => {
       layout={{
         width: 600,
         height: 400,
-        title: "Box Plot of Sample Data",
-        yaxis: { title: "Value" },
+        title: "箱ひげ図:現NBAガード身長",
+        yaxis: { title: "身長(m)" },
       }}
     />
   );

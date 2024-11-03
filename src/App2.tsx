@@ -54,10 +54,10 @@ const App: React.FC = () => {
             centered
             style={{ marginBottom: "20px" }}
           >
-            <Tab label="DataGrid 表示" />
-            <Tab label="Barチャート" />
-            <Tab label="MinPie" />
-            <Tab label="BoxPlot" />
+            <Tab label="一覧表:全データ" />
+            <Tab label="棒グラフ:各データ" />
+            <Tab label="円グラフ:出場時間割合" />
+            <Tab label="箱ひげ図:身長" />
           </Tabs>
 
           <Box style={{ padding: "20px", border: "1px solid #ccc" }}>

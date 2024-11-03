@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { Checkbox, FormControlLabel } from "@mui/material";
+import dayjs from "dayjs";
 
 interface ChartDisplayProps {
   rows: any[];
@@ -39,7 +40,10 @@ const ChartDisplay: React.FC<ChartDisplayProps> = ({ rows, columns }) => {
     );
   };
 
-  const labels = sortedRows.map((row) => row[columns[0].field]); // ソートしたrowsのDATEをラベルに使用
+  // ソートしたrowsのDATEをフォーマットしてラベルに使用
+  const labels = sortedRows.map((row) =>
+    dayjs(row[columns[0].field]).format("YYYY/MM/DD")
+  );
 
   // チェックされているフィールドに基づいてデータを準備
   const dataset = selectedFields.map((field) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { Checkbox, FormControlLabel, FormGroup } from "@mui/material";
+import dayjs from "dayjs";
 
 interface MinPieChartProps {
   rows: any[];
@@ -20,7 +21,7 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
   // 日付のリストを設定し、初期状態ですべて選択
   const extractAvailableDates = () => {
     const dateField = columns[0].field;
-    const dates = rows.map((row) => row[dateField]);
+    const dates = rows.map((row) => dayjs(row[dateField]).format("YYYY/MM/DD")); // ここで文字列化
     setAvailableDates(dates);
     setSelectedDate(dates[0]); // 初期状態で最初の日付を選択
   };
@@ -35,7 +36,9 @@ const MinPie: React.FC<MinPieChartProps> = ({ rows, columns }) => {
     const minField = columns.find((col) => col.headerName === "MIN")?.field;
     const dateField = columns[0].field;
 
-    const row = rows.find((r) => r[dateField] === selectedDate);
+    const row = rows.find(
+      (r) => dayjs(r[dateField]).format("YYYY/MM/DD") === selectedDate
+    ); // 選択された日付と一致するものを検索
     const minValue = row && minField ? parseFloat(row[minField]) || 0 : 0;
 
     return [
